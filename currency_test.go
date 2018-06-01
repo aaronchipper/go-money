@@ -61,7 +61,7 @@ func TestCurrency_AddCurrency(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		AddCurrency(tc.code, "", tc.template, "", "", 0)
+		AddCurrency(CurrType(9999999), tc.code, "", tc.template, "", "", 0)
 		c := newCurrency(tc.code).get()
 
 		if c.Template != tc.template {
@@ -72,8 +72,8 @@ func TestCurrency_AddCurrency(t *testing.T) {
 
 func TestCurrency_GetCurrency(t *testing.T) {
 	code := "KLINGONDOLLAR"
-	desired := Currency{DecPoint: ".", Thousand: ",", Code: code, Fraction: 2, Grapheme: "$", Template: "$1"}
-	AddCurrency(desired.Code, desired.Grapheme, desired.Template, desired.DecPoint, desired.Thousand, desired.Fraction)
+	desired := Currency{Type: CurrType(9999999), DecPoint: ".", Thousand: ",", Code: code, Fraction: 2, Grapheme: "$", Template: "$1"}
+	AddCurrency(CurrType(9999999),desired.Code, desired.Grapheme, desired.Template, desired.DecPoint, desired.Thousand, desired.Fraction)
 	currency, _ := GetCurrency(code)
 	if !reflect.DeepEqual(currency, &desired) {
 		t.Errorf("Currencies do not match %+v got %+v", desired, currency)

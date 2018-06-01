@@ -20,6 +20,8 @@ const (
 	REWARD						//	REWARD	(rewards points. Not sure if this is the same as loyalty, but something in my gut tells me I'll want to differentiate some day, so... meh)
 	GAME						//	GAME	(Game credits)
 	POINTS						//	POINTS	(Generic value store)
+	
+	UNKNOWN				= 9999  //  UNKNOWN    (Testing currencies. Should never see in production)
 )
 
 // UnknownCurrencyCode is used when creating Money objects where we don't yet know the currency.
@@ -177,19 +179,23 @@ var currencies = map[string]*Currency{
 	"BTC": {Type: CRYPTO, DecPoint: ".", Thousand: ",", Code: "BTC", Fraction: 8, Grapheme: "\u20bf", Template: "$1"},
 	"XBT": {Type: CRYPTO, DecPoint: ".", Thousand: ",", Code: "XBT", Fraction: 8, Grapheme: "\u20bf", Template: "$1"},
 	
-
+	// Unknown currency.
+	// Only to be used in Test code.
+	// Seriously, don't be a dick with them.
+	"???": {Type: UNKNOWN, DecPoint: ".", Thousand: ",", Code: "???", Fraction: 2, Grapheme: "$", Template: "$1"},
 
 }
 
 // AddCurrency lets you insert or update currency in currencies list
-func AddCurrency(Code, Grapheme, Template, DecPoint, Thousand string, Fraction int) *Currency {
+func AddCurrency(Type CurrType, Code, Grapheme, Template, DecPoint, Thousand string, Fraction int) *Currency {
 	currencies[Code] = &Currency{
-		Code:     Code,
-		Grapheme: Grapheme,
-		Template: Template,
-		DecPoint:  DecPoint,
-		Thousand: Thousand,
-		Fraction: Fraction,
+		Type:		Type,
+		Code:     	Code,
+		Grapheme: 	Grapheme,
+		Template: 	Template,
+		DecPoint:  	DecPoint,
+		Thousand: 	Thousand,
+		Fraction: 	Fraction,
 	}
 
 	return currencies[Code]

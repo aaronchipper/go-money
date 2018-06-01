@@ -60,7 +60,8 @@ var ZeroMoney = Money{ amount: decimal.Zero, currency: getUnknownCurrency(), }
 // New returns a new Money of type currency, with an amount of value * 10 ^ exp.
 func New(curr string, value int64, exp int32) (Money, error) {
 	
-	if c, err := GetCurrency(curr); err {
+	c, ok := GetCurrency(curr)
+	if !ok {
 		return Money{}, fmt.Errorf("Currency [%s] not supported", curr)
 	} else {
 		return Money{
@@ -73,7 +74,8 @@ func New(curr string, value int64, exp int32) (Money, error) {
 // NewFromBigInt returns a new Money from a big.Int, value * 10 ^ exp
 func NewFromBigInt(curr string, value *big.Int, exp int32) (Money, error) {
 	
-	if c, err := GetCurrency(curr); err {
+	c, ok := GetCurrency(curr)
+	if !ok {
 		return Money{}, fmt.Errorf("Currency [%s] not supported", curr)
 	} else {
 	
@@ -93,7 +95,8 @@ func NewFromBigInt(curr string, value *big.Int, exp int32) (Money, error) {
 //
 func NewFromString(curr string, value string) (Money, error) {
 
-	if c, err := GetCurrency(curr); err {
+	c, ok := GetCurrency(curr)
+	if !ok {
 		return Money{}, fmt.Errorf("Currency [%s] not supported", curr)
 	} else {
 		if d, errr := decimal.NewFromString(value); errr != nil {
@@ -138,7 +141,7 @@ func RequireFromString(curr string, value string) Money {
 func NewFromFloat(curr string, value float64) (Money, error) {
 	return NewFromFloatWithExponent(curr, value, math.MinInt32)
 }
-
+ 
 // NewFromFloatWithExponent converts a float64 to Decimal, with an arbitrary
 // number of fractional digits.
 //
@@ -151,7 +154,8 @@ func NewFromFloatWithExponent(curr string, value float64, exp int32) (Money, err
 		panic(fmt.Sprintf("Cannot create a Decimal from %v", value))
 	}
 
-	if c, err := GetCurrency(curr); err  {
+	c, ok := GetCurrency(curr)
+	if !ok  {
 		return Money{}, fmt.Errorf("Currency [%s] not supported", curr)
 	} else {
 
@@ -167,11 +171,12 @@ func NewFromFloatWithExponent(curr string, value float64, exp int32) (Money, err
 // Otherwise it returns an error (nil if ok)
 func (m *Money) UpdateCurrency(newCurr string) error {
 	
-	if newCurr != UnknownCurrencyCode {
-		return fmt.Errorf("Cannot change currency. Already set!", newCurr)
+	if m.currency.Code != UnknownCurrencyCode {
+		return fmt.Errorf("Cannot change currency to [%s]. Already set to [%s]!", newCurr, m.currency.Code)
 	}
 	
-	if c, err := GetCurrency(newCurr); err {
+	c, ok := GetCurrency(newCurr)
+	if !ok {
 		return fmt.Errorf("Currency [%s] not supported", newCurr)
 	} else {
 	
@@ -310,7 +315,65 @@ func (m Money) DivRound(m2 Money, precision int32) Money {
 // divide Moneys of differing currencies.
 // That functionality may come later
 func (m Money) Div(m2 Money) Money {
-	return DivRound(m2, int32(DivisionPrecision)) 
+	return m.DivRound(m2, int32(DivisionPrecision)) 
+}
+
+
+// QuoRem does divsion with remainder
+// d.QuoRem(d2,precision) returns quotient q and remainder r such that
+//   d = d2 * q + r, q an integer multiple of 10^(-precision)
+//   0 <= r < abs(d2) * 10 ^(-precision) if d>=0
+//   0 >= r > -abs(d2) * 10 ^(-precision) if d<0
+// Note that precision<0 is allowed as input.
+func (m Money) QuoRem(m2 Money, precision int32) (Money, Money) {
+	m.ensureInitialized()
+	m2.ensureInitialized()
+
+	if !m.currency.equals(m2.currency) {
+		panic(fmt.Sprintf("Cannot divide amounts with mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency ))
+	}
+
+	d1, d2 := m.amount.QuoRem(m2.amount,precision)
+	
+	return Money{
+			amount: d1,
+			currency: m.currency,			
+		   },
+		   Money{
+			amount: d2,
+			currency: m2.currency,			
+		   }	
+}
+
+// Mod returns d % d2.
+func (m Money) Mod(m2 Money) Money {
+	m.ensureInitialized()
+	m2.ensureInitialized()
+
+	if !m.currency.equals(m2.currency) {
+		panic(fmt.Sprintf("Cannot modulo amounts with mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency ))
+	}
+
+	return Money{
+			amount: m.amount.Mod(m2.amount),
+			currency: m.currency,			
+	}
+}
+
+// Pow returns d to the power d2
+func (m Money) Pow(m2 Money) Money {
+
+	m.ensureInitialized()
+	m2.ensureInitialized()
+
+	if !m.currency.equals(m2.currency) {
+		panic(fmt.Sprintf("Cannot take power of amounts with mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency ))
+	}
+
+	return Money{
+			amount: m.amount.Pow(m2.amount),
+			currency: m.currency,			
+	}
 }
 
 
@@ -388,6 +451,7 @@ func (m Money) Coefficient() *big.Int {
 	// we copy the coefficient so that mutating the result does not mutate the
 	// Decimal.
 	m.ensureInitialized()
+	
 	return m.amount.Coefficient()
 }
 
@@ -447,8 +511,9 @@ func (m Money) String() string {
 func (m Money) StringFixed(places int32) string {
 	m.ensureInitialized()
 	
-	return m.amount.Round(places).String()
+	return m.amount.StringFixed(places)
 }
+
 
 // StringFixedBank returns a banker rounded fixed-point string with places digits
 // after the decimal point.
@@ -463,7 +528,32 @@ func (m Money) StringFixed(places int32) string {
 // 	   NewFromFloat(5.45).StringFixed(3) // output: "5.450"
 // 	   NewFromFloat(545).StringFixed(-1) // output: "550"
 //
-//TODO Fix this.
+func (m Money) StringFixedBank(places int32) string { 
+	m.ensureInitialized()
+	
+	return m.amount.StringFixedBank(places)
+}
+
+func (m Money) StringFixedCash(interval uint8) string {
+	m.ensureInitialized()
+	
+	return m.amount.StringFixedCash(interval)
+}
+
+
+// StringFixedBank returns a banker rounded fixed-point string with places digits
+// after the decimal point.
+//
+// Example:
+//
+// 	   NewFromFloat(0).StringFixed(2) // output: "0.00"
+// 	   NewFromFloat(0).StringFixed(0) // output: "0"
+// 	   NewFromFloat(5.45).StringFixed(0) // output: "5"
+// 	   NewFromFloat(5.45).StringFixed(1) // output: "5.4"
+// 	   NewFromFloat(5.45).StringFixed(2) // output: "5.45"
+// 	   NewFromFloat(5.45).StringFixed(3) // output: "5.450"
+// 	   NewFromFloat(545).StringFixed(-1) // output: "550"
+//
 func (m Money) FormattedStringBank() string {
 	m.ensureInitialized()
 	
@@ -640,20 +730,24 @@ func (m Money) Truncate(precision int32) Money {
 func (m *Money) UnmarshalBinary(data []byte) error {
 	
 	var err error = nil
+	var mo Money
+
 	if ld := len(data); ld < 8 {
 		err = fmt.Errorf("Not enough data - only found [%v] bytes", ld)
 	} else {
 		// Extract the exponent
-		curr := string(data[:4])
+		curr := string(data[:3])
 	
 		// Extract the exponent
-		exp := int32(binary.BigEndian.Uint32(data[4:8]))
+		exp := int32(binary.BigEndian.Uint32(data[3:7]))
 	
 		// Extract the value
 		v := new(big.Int)
-		if err = v.GobDecode(data[8:]); err != nil {
-			mo, err := NewFromBigInt(curr,v,exp)
-			m = &mo
+		
+		if err = v.GobDecode(data[7:]); err == nil {
+			mo, _ = NewFromBigInt(curr,v,exp)
+			*m = mo
+		} else {
 		}	
 	}
 	
@@ -675,7 +769,7 @@ func (m Money) MarshalBinary() (data []byte, err error) {
 	b1 = append (b1,b2...)
 	
 	// Add the value
-	var b3 []byte
+	var b3 []byte 
 	var mCo = m.Coefficient()
 	if b3, err = mCo.GobEncode(); err != nil {
 		return
@@ -683,6 +777,7 @@ func (m Money) MarshalBinary() (data []byte, err error) {
 
 	// Return the byte array
 	data = append(b1, b3...)
+	
 	return
 }
 
@@ -761,7 +856,6 @@ func (m *Money) GobDecode(data []byte) error {
 // If not, create a valid Zero so we can at least not crash things too badly. 
 func (m *Money) ensureInitialized() {
 	if m.currency == nil {
-		m.amount = decimal.Zero
 		m.currency = getUnknownCurrency()
 	}
 }
