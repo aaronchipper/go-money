@@ -13,36 +13,38 @@ import (
 // to the original Currency code from the original Rhymond/go-money/currency.go
 type CurrType int
 
+// Currency types available.
 const (
-	FIAT	CurrType	= iota	//	FIAT   	(regular currency)
-	CRYPTO						//	CRYPTO	(the new kids on the block, like BTC, XEM, etc)
-	LOYALTY						//	LOYALTY	(loyalty program points)
-	REWARD						//	REWARD	(rewards points. Not sure if this is the same as loyalty, but something in my gut tells me I'll want to differentiate some day, so... meh)
-	GAME						//	GAME	(Game credits)
-	POINTS						//	POINTS	(Generic value store)
-	
-	UNKNOWN				= 9999  //  UNKNOWN    (Testing currencies. Should never see in production)
+	FIAT    CurrType = iota //	FIAT   	(regular currency)
+	CRYPTO                  //	CRYPTO	(the new kids on the block, like BTC, XEM, etc)
+	LOYALTY                 //	LOYALTY	(loyalty program points)
+	REWARD                  //	REWARD	(rewards points. Not sure if this is the same as loyalty, but something in my gut tells me I'll want to differentiate some day, so... meh)
+	GAME                    //	GAME	(Game credits)
+	POINTS                  //	POINTS	(Generic value store)
+
+	UNKNOWN = 9999 //  UNKNOWN    (Testing currencies. Should never see in production)
 )
 
 // UnknownCurrencyCode is used when creating Money objects where we don't yet know the currency.
 const (
-	UnknownCurrencyCode		= "???"
+	UnknownCurrencyCode = "???"
+	BadCurrencyCode     = ":'("
 )
 
 // Currency represents money currency information required for formatting
 type Currency struct {
-	Type	 CurrType
+	Type     CurrType
 	Code     string
 	Fraction int
 	Grapheme string
 	Template string
-	DecPoint  string
+	DecPoint string
 	Thousand string
 }
 
 // currencies represents a collection of currency
-// If adding to this list, you should only use 3 ASCII chars as the code. 
-// If this changes, we'll need to fix the (Un)MarshallBinary functions as they'll break badly. 
+// If adding to this list, you should only use 3 ASCII chars as the code.
+// If this changes, we'll need to fix the (Un)MarshallBinary functions as they'll break badly.
 var currencies = map[string]*Currency{
 	// Fiat Currencies
 	"AED": {Type: FIAT, DecPoint: ".", Thousand: ",", Code: "AED", Fraction: 2, Grapheme: ".\u062f.\u0625", Template: "1 $"},
@@ -178,24 +180,24 @@ var currencies = map[string]*Currency{
 	// Bitcoin has 2 accepted codes as of now. ISO 4217 standard is moving to XBT at some point
 	"BTC": {Type: CRYPTO, DecPoint: ".", Thousand: ",", Code: "BTC", Fraction: 8, Grapheme: "\u20bf", Template: "$1"},
 	"XBT": {Type: CRYPTO, DecPoint: ".", Thousand: ",", Code: "XBT", Fraction: 8, Grapheme: "\u20bf", Template: "$1"},
-	
+
 	// Unknown currency.
 	// Only to be used in Test code.
 	// Seriously, don't be a dick with them.
-	"???": {Type: UNKNOWN, DecPoint: ".", Thousand: ",", Code: "???", Fraction: 2, Grapheme: "$", Template: "$1"},
-
+	UnknownCurrencyCode: {Type: UNKNOWN, DecPoint: ".", Thousand: ",", Code: UnknownCurrencyCode, Fraction: 2, Grapheme: "$", Template: "$1"},
+	BadCurrencyCode:     {Type: UNKNOWN, DecPoint: ".", Thousand: ",", Code: BadCurrencyCode, Fraction: 2, Grapheme: BadCurrencyCode, Template: "$1"},
 }
 
 // AddCurrency lets you insert or update currency in currencies list
 func AddCurrency(Type CurrType, Code, Grapheme, Template, DecPoint, Thousand string, Fraction int) *Currency {
 	currencies[Code] = &Currency{
-		Type:		Type,
-		Code:     	Code,
-		Grapheme: 	Grapheme,
-		Template: 	Template,
-		DecPoint:  	DecPoint,
-		Thousand: 	Thousand,
-		Fraction: 	Fraction,
+		Type:     Type,
+		Code:     Code,
+		Grapheme: Grapheme,
+		Template: Template,
+		DecPoint: DecPoint,
+		Thousand: Thousand,
+		Fraction: Fraction,
 	}
 
 	return currencies[Code]
@@ -208,7 +210,7 @@ func newCurrency(code string) *Currency {
 // GetCurrency returns the currency given the code.
 func GetCurrency(code string) (*Currency, bool) {
 	c, err := currencies[code]
-	return c, err 
+	return c, err
 }
 
 // Formatter returns currency formatter representing
@@ -216,7 +218,7 @@ func GetCurrency(code string) (*Currency, bool) {
 func (c *Currency) Formatter() *Formatter {
 	return &Formatter{
 		Fraction: c.Fraction,
-		DecPoint:  c.DecPoint,
+		DecPoint: c.DecPoint,
 		Thousand: c.Thousand,
 		Grapheme: c.Grapheme,
 		Template: c.Template,
@@ -229,10 +231,24 @@ func (c *Currency) getDefault() *Currency {
 	return &Currency{Type: FIAT, DecPoint: ".", Thousand: ",", Code: c.Code, Fraction: 2, Grapheme: c.Code, Template: "1$"}
 }
 
-// getDefault represent default currency if currency is not found in currencies list.
+// getUnknownCurrency represent unknown currency if currency is not found in currencies list,
+// or unable to be set at runtime.
 // Grapheme and Code fields will be changed by currency code
 func getUnknownCurrency() *Currency {
-	return &Currency{Type: FIAT, DecPoint: ".", Thousand: ",", Code: UnknownCurrencyCode, Fraction: 2, Grapheme: "$", Template: "1$"}
+	if curr, ok := currencies[UnknownCurrencyCode]; ok {
+		return curr
+	}
+	return &Currency{Type: FIAT, DecPoint: ".", Thousand: ",", Code: UnknownCurrencyCode, Fraction: 2, Grapheme: "$", Template: "$1"}
+}
+
+// getBadCurrency represent a "bad' currency for failed Money creation (so we don't return empty Money{}
+// structs as that is just shitty behaviour
+// Grapheme and Code fields will be changed by currency code
+func getBadCurrency() *Currency {
+	if curr, ok := currencies[BadCurrencyCode]; ok {
+		return curr
+	}
+	return &Currency{Type: FIAT, DecPoint: ".", Thousand: ",", Code: BadCurrencyCode, Fraction: 2, Grapheme: BadCurrencyCode, Template: "$1"}
 }
 
 // get extended currency using currencies list

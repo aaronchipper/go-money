@@ -2,7 +2,7 @@ package money
 
 import (
 	"database/sql/driver"
-//	"encoding/json"
+	//	"encoding/json"
 	"encoding/xml"
 	"math"
 	"math/big"
@@ -15,36 +15,38 @@ import (
 )
 
 type testEnt struct {
-	float   float64
-	short   string
-	exact   string
-	inexact string
+	float           float64
+	short           string
+	exact           string
+	inexact         string
+	asAUD           string
+	asAUDAccounting string
 }
 
 var testTable = []*testEnt{
-	{3.141592653589793, "3.141592653589793", "", "3.14159265358979300000000000000000000000000000000000004"},
-	{3, "3", "", "3.0000000000000000000000002"},
-	{1234567890123456, "1234567890123456", "", "1234567890123456.00000000000000002"},
-	{1234567890123456000, "1234567890123456000", "", "1234567890123456000.0000000000000008"},
-	{1234.567890123456, "1234.567890123456", "", "1234.5678901234560000000000000009"},
-	{.1234567890123456, "0.1234567890123456", "", "0.12345678901234560000000000006"},
-	{0, "0", "", "0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"},
-	{.1111111111111110, "0.111111111111111", "", "0.111111111111111000000000000000009"},
-	{.1111111111111111, "0.1111111111111111", "", "0.111111111111111100000000000000000000023423545644534234"},
-	{.1111111111111119, "0.1111111111111119", "", "0.111111111111111900000000000000000000000000000000000134123984192834"},
-	{.000000000000000001, "0.000000000000000001", "", "0.00000000000000000100000000000000000000000000000000012341234"},
-	{.000000000000000002, "0.000000000000000002", "", "0.0000000000000000020000000000000000000012341234123"},
-	{.000000000000000003, "0.000000000000000003", "", "0.00000000000000000299999999999999999999999900000000000123412341234"},
-	{.000000000000000005, "0.000000000000000005", "", "0.00000000000000000500000000000000000023412341234"},
-	{.000000000000000008, "0.000000000000000008", "", "0.0000000000000000080000000000000000001241234432"},
-	{.1000000000000001, "0.1000000000000001", "", "0.10000000000000010000000000000012341234"},
-	{.1000000000000002, "0.1000000000000002", "", "0.10000000000000020000000000001234123412"},
-	{.1000000000000003, "0.1000000000000003", "", "0.1000000000000003000000000000001234123412"},
-	{.1000000000000005, "0.1000000000000005", "", "0.1000000000000005000000000000000006441234"},
-	{.1000000000000008, "0.1000000000000008", "", "0.100000000000000800000000000000000009999999999999999999999999999"},
-	{1e25, "10000000000000000000000000", "", "10000000000000000000000000.00000000000000000098798978"},
-	{math.MaxInt64, strconv.FormatInt(math.MaxInt64, 10), "", strconv.FormatInt(math.MaxInt64, 10)},
-	{1.29067116156722e-309, "0", "", "0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001290671161567218558822290567835270536800098852722416870074139002112543896676308448335063375297788379444685193974290737962187240854947838776604607190387984577130572928111657710645015086812756013489109884753559084166516937690932698276436869274093950997935137476803610007959500457935217950764794724766740819156974617155861568214427828145972181876775307023388139991104942469299524961281641158436752347582767153796914843896176260096039358494077706152272661453132497761307744086665088096215425146090058519888494342944692629602847826300550628670375451325582843627504604013541465361435761965354140678551369499812124085312128659002910905639984075064968459581691226705666561364681985266583563078466180095375402399087817404368974165082030458595596655868575908243656158447265625000000000000000000000000000000000000004440000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"},
+	{3.141592653589793, "3.141592653589793", "", "3.14159265358979300000000000000000000000000000000000004", "$3.14", "(3.14)"},
+	{3, "3", "", "3.0000000000000000000000002", "$3.00", "(3.00)"},
+	{1234567890123456, "1234567890123456", "", "1234567890123456.00000000000000002", "$1,234,567,890,123,456.00", "(1234567890123456.00)"},
+	{1234567890123456000, "1234567890123456000", "", "1234567890123456000.0000000000000008", "$1,234,567,890,123,456,000.00", "(1234567890123456000.00)"},
+	{1234.567890123456, "1234.567890123456", "", "1234.5678901234560000000000000009", "$1,234.57", "(1234.57)"},
+	{.1234567890123456, "0.1234567890123456", "", "0.12345678901234560000000000006", "$0.12", "(0.12)"},
+	{0, "0", "", "0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001", "$0.00", "0.00"},
+	{.1111111111111110, "0.111111111111111", "", "0.111111111111111000000000000000009", "$0.11", "(0.11)"},
+	{.1111111111111111, "0.1111111111111111", "", "0.111111111111111100000000000000000000023423545644534234", "$0.11", "(0.11)"},
+	{.1111111111111119, "0.1111111111111119", "", "0.111111111111111900000000000000000000000000000000000134123984192834", "$0.11", "(0.11)"},
+	{.000000000000000001, "0.000000000000000001", "", "0.00000000000000000100000000000000000000000000000000012341234", "$0.00", "0.00"},
+	{.000000000000000002, "0.000000000000000002", "", "0.0000000000000000020000000000000000000012341234123", "$0.00", "0.00"},
+	{.000000000000000003, "0.000000000000000003", "", "0.00000000000000000299999999999999999999999900000000000123412341234", "$0.00", "0.00"},
+	{.000000000000000005, "0.000000000000000005", "", "0.00000000000000000500000000000000000023412341234", "$0.00", "0.00"},
+	{.000000000000000008, "0.000000000000000008", "", "0.0000000000000000080000000000000000001241234432", "$0.00", "0.00"},
+	{.1000000000000001, "0.1000000000000001", "", "0.10000000000000010000000000000012341234", "$0.10", "(0.10)"},
+	{.1000000000000002, "0.1000000000000002", "", "0.10000000000000020000000000001234123412", "$0.10", "(0.10)"},
+	{.1000000000000003, "0.1000000000000003", "", "0.1000000000000003000000000000001234123412", "$0.10", "(0.10)"},
+	{.1000000000000005, "0.1000000000000005", "", "0.1000000000000005000000000000000006441234", "$0.10", "(0.10)"},
+	{.1000000000000008, "0.1000000000000008", "", "0.100000000000000800000000000000000009999999999999999999999999999", "$0.10", "(0.10)"},
+	{1e25, "10000000000000000000000000", "", "10000000000000000000000000.00000000000000000098798978", "$10,000,000,000,000,000,000,000,000.00", "(10000000000000000000000000.00)"},
+	{math.MaxInt64, strconv.FormatInt(math.MaxInt64, 10), "", strconv.FormatInt(math.MaxInt64, 10), "$9,223,372,036,854,775,803.00", "(" + strconv.FormatInt(math.MaxInt64, 10) + ".00)"},
+	{1.29067116156722e-309, "0", "", "0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001290671161567218558822290567835270536800098852722416870074139002112543896676308448335063375297788379444685193974290737962187240854947838776604607190387984577130572928111657710645015086812756013489109884753559084166516937690932698276436869274093950997935137476803610007959500457935217950764794724766740819156974617155861568214427828145972181876775307023388139991104942469299524961281641158436752347582767153796914843896176260096039358494077706152272661453132497761307744086665088096215425146090058519888494342944692629602847826300550628670375451325582843627504604013541465361435761965354140678551369499812124085312128659002910905639984075064968459581691226705666561364681985266583563078466180095375402399087817404368974165082030458595596655868575908243656158447265625000000000000000000000000000000000000004440000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", "$0.00", "0.00"},
 }
 
 var testTableScientificNotation = map[string]string{
@@ -75,7 +77,7 @@ func init() {
 	withNeg := testTable[:]
 	for _, s := range testTable {
 		if s.float > 0 && s.short != "0" && s.exact != "0" {
-			withNeg = append(withNeg, &testEnt{-s.float, "-" + s.short, "-" + s.exact, "-" + s.inexact})
+			withNeg = append(withNeg, &testEnt{-s.float, "-" + s.short, "-" + s.exact, "-" + s.inexact, "N/A", "N/A"})
 		}
 	}
 	testTable = withNeg
@@ -90,7 +92,7 @@ func init() {
 func TestNewFromFloat(t *testing.T) {
 	for _, x := range testTable {
 		s := x.exact
-		d,_ := NewFromFloat("???",x.float)
+		d, _ := NewFromFloat("???", x.float)
 		if d.String() != s {
 			t.Errorf("expected %s, got %s (%s, %d)",
 				s, d.String(),
@@ -106,7 +108,7 @@ func TestNewFromFloat(t *testing.T) {
 
 	for _, n := range shouldPanicOn {
 		var d Money
-		if !didPanic(func() { d,_ = NewFromFloat("???",n) }) {
+		if !didPanic(func() { d, _ = NewFromFloat("???", n) }) {
 			t.Fatalf("Expected panic when creating a Decimal from %v, got %v instead", n, d.String())
 		}
 	}
@@ -115,7 +117,7 @@ func TestNewFromFloat(t *testing.T) {
 func TestNewFromString(t *testing.T) {
 	for _, x := range testTable {
 		s := x.short
-		d, err := NewFromString("???",s)
+		d, err := NewFromString("???", s)
 		if err != nil {
 			t.Errorf("error while parsing %s", s)
 		} else if d.String() != s {
@@ -127,7 +129,7 @@ func TestNewFromString(t *testing.T) {
 
 	for _, x := range testTable {
 		s := x.exact
-		d, err := NewFromString("???",s)
+		d, err := NewFromString("???", s)
 		if err != nil {
 			t.Errorf("error while parsing %s", s)
 		} else if d.String() != s {
@@ -138,7 +140,7 @@ func TestNewFromString(t *testing.T) {
 	}
 
 	for e, s := range testTableScientificNotation {
-		d, err := NewFromString("???",e)
+		d, err := NewFromString("???", e)
 		if err != nil {
 			t.Errorf("error while parsing %s", e)
 		} else if d.String() != s {
@@ -152,14 +154,14 @@ func TestNewFromString(t *testing.T) {
 func TestFloat64(t *testing.T) {
 	for _, x := range testTable {
 		s := x.exact
-		d, err := NewFromString("???",s)
+		d, err := NewFromString("???", s)
 		if err != nil {
 			t.Errorf("error while parsing %s", s)
 		} else if f, exact := d.Float64(); !exact || f != x.float {
 			t.Errorf("cannot represent exactly %s", s)
 		}
 		s = x.inexact
-		d, err = NewFromString("???",s)
+		d, err = NewFromString("???", s)
 		if err != nil {
 			t.Errorf("error while parsing %s", s)
 		} else if f, exact := d.Float64(); exact || f != x.float {
@@ -203,7 +205,7 @@ func TestNewFromStringErrs(t *testing.T) {
 	}
 
 	for _, s := range tests {
-		_, err := NewFromString("???",s)
+		_, err := NewFromString("???", s)
 
 		if err == nil {
 			t.Errorf("error expected when parsing %s", s)
@@ -225,8 +227,8 @@ func TestNewFromStringDeepEquals(t *testing.T) {
 	}
 
 	for _, cmp := range tests {
-		d1, err1 := NewFromString("???",cmp.str1)
-		d2, err2 := NewFromString("???",cmp.str2)
+		d1, err1 := NewFromString("???", cmp.str1)
+		d2, err2 := NewFromString("???", cmp.str2)
 
 		if err1 != nil || err2 != nil {
 			t.Errorf("error parsing strings to decimals")
@@ -248,7 +250,7 @@ func TestRequireFromString(t *testing.T) {
 		}
 	}()
 
-	d := RequireFromString("???",s)
+	d := RequireFromString("???", s)
 	if d.String() != s {
 		t.Errorf("expected %s, got %s (%s, %d)",
 			s, d.String(),
@@ -266,7 +268,7 @@ func TestRequireFromStringErrs(t *testing.T) {
 			err = recover()
 		}()
 
-		d = RequireFromString("???",s)
+		d = RequireFromString("???", s)
 	}()
 
 	if err == nil {
@@ -322,7 +324,7 @@ func TestNewFromFloatWithExponent(t *testing.T) {
 	}
 
 	for input, s := range tests {
-		d,_ := NewFromFloatWithExponent("???",input.float, input.exp)
+		d, _ := NewFromFloatWithExponent("???", input.float, input.exp)
 		if d.String() != s {
 			t.Errorf("expected %s, got %s (%s, %d)",
 				s, d.String(),
@@ -338,7 +340,7 @@ func TestNewFromFloatWithExponent(t *testing.T) {
 
 	for _, n := range shouldPanicOn {
 		var d Money
-		if !didPanic(func() { d,_ = NewFromFloatWithExponent("???",n, 0) }) {
+		if !didPanic(func() { d, _ = NewFromFloatWithExponent("???", n, 0) }) {
 			t.Fatalf("Expected panic when creating a Decimal from %v, got %v instead", n, d.String())
 		}
 	}
@@ -367,7 +369,7 @@ func TestNewFromBigIntWithExponent(t *testing.T) {
 	}
 
 	for input, s := range tests {
-		d,_ := NewFromBigInt("???",input.val, input.exp)
+		d, _ := NewFromBigInt("???", input.val, input.exp)
 		if d.String() != s {
 			t.Errorf("expected %s, got %s (%s, %d)",
 				s, d.String(),
@@ -544,7 +546,7 @@ func TestXML(t *testing.T) {
 		s := x.short
 		var doc struct {
 			XMLName xml.Name `xml:"account"`
-			Amount  Money  `xml:"amount"`
+			Amount  Money    `xml:"amount"`
 		}
 		docStr := `<account><amount>` + s + `</amount></account>`
 		err := xml.Unmarshal([]byte(docStr), &doc)
@@ -577,7 +579,7 @@ func TestBadXML(t *testing.T) {
 	} {
 		var doc struct {
 			XMLName xml.Name `xml:"account"`
-			Amount  Money  `xml:"amount"`
+			Amount  Money    `xml:"amount"`
 		}
 		err := xml.Unmarshal([]byte(testCase), &doc)
 		if err == nil {
@@ -585,43 +587,6 @@ func TestBadXML(t *testing.T) {
 		}
 	}
 }
-
-//func TestDecimal_rescale(t *testing.T) {
-//	type Inp struct {
-//		int     int64
-//		exp     int32
-//		rescale int32
-//	}
-//	tests := map[Inp]string{
-//		Inp{1234, -3, -5}: "1.234",
-//		Inp{1234, -3, 0}:  "1",
-//		Inp{1234, 3, 0}:   "1234000",
-//		Inp{1234, -4, -4}: "0.1234",
-//	}
-//
-//	// add negatives
-//	for p, s := range tests {
-//		if p.int > 0 {
-//			tests[Inp{-p.int, p.exp, p.rescale}] = "-" + s
-//		}
-//	}
-//
-//	for input, s := range tests {
-//		d := New(input.int, input.exp).rescale(input.rescale)
-//
-//		if d.String() != s {
-//			t.Errorf("expected %s, got %s (%s, %d)",
-//				s, d.String(),
-//				d.value.String(), d.exp)
-//		}
-//
-//		// test StringScaled
-//		s2 := New(input.int, input.exp).StringScaled(input.rescale)
-//		if s2 != s {
-//			t.Errorf("expected %s, got %s", s, s2)
-//		}
-//	}
-//}
 
 func TestDecimal_Floor(t *testing.T) {
 	assertFloor := func(input, expected Money) {
@@ -648,14 +613,14 @@ func TestDecimal_Floor(t *testing.T) {
 		{"-1.999", "-2"},
 	}
 	for _, test := range testsWithStrings {
-		expected, _ := NewFromString("???",test.expected)
-		input, _ := NewFromString("???",test.input)
+		expected, _ := NewFromString("???", test.expected)
+		input, _ := NewFromString("???", test.input)
 		assertFloor(input, expected)
 	}
 
 	type testDataDecimal struct {
-		co    int64
-		ex	  int32	
+		co       int64
+		ex       int32
 		expected string
 	}
 	testsWithDecimals := []testDataDecimal{
@@ -675,14 +640,14 @@ func TestDecimal_Floor(t *testing.T) {
 		{-1999, -3, "-2"},
 	}
 	for _, test := range testsWithDecimals {
-		input,_ := New("???", test.co, test.ex)
-		expected, _ := NewFromString("???",test.expected)
+		input, _ := New("???", test.co, test.ex)
+		expected, _ := NewFromString("???", test.expected)
 		assertFloor(input, expected)
 	}
 }
 
 func Benchmark_FloorFast(b *testing.B) {
-	input,_ := New("???",200, 2)
+	input, _ := New("???", 200, 2)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		input.Floor()
@@ -690,7 +655,7 @@ func Benchmark_FloorFast(b *testing.B) {
 }
 
 func Benchmark_FloorRegular(b *testing.B) {
-	input,_ := New("???",200, -2)
+	input, _ := New("???", 200, -2)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		input.Floor()
@@ -722,14 +687,14 @@ func TestDecimal_Ceil(t *testing.T) {
 		{"-1.999", "-1"},
 	}
 	for _, test := range testsWithStrings {
-		expected, _ := NewFromString("???",test.expected)
-		input, _ := NewFromString("???",test.input)
+		expected, _ := NewFromString("???", test.expected)
+		input, _ := NewFromString("???", test.input)
 		assertCeil(input, expected)
 	}
 
 	type testDataDecimal struct {
-		co    int64
-		ex	  int32	
+		co       int64
+		ex       int32
 		expected string
 	}
 	testsWithDecimals := []testDataDecimal{
@@ -749,8 +714,8 @@ func TestDecimal_Ceil(t *testing.T) {
 		{-1999, -3, "-1"},
 	}
 	for _, test := range testsWithDecimals {
-		input,_ := New("???", test.co, test.ex)
-		expected, _ := NewFromString("???",test.expected)
+		input, _ := New("???", test.co, test.ex)
+		expected, _ := NewFromString("???", test.expected)
 		assertCeil(input, expected)
 	}
 }
@@ -806,13 +771,13 @@ func TestDecimal_RoundAndStringFixed(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		d, err := NewFromString("???",test.input)
+		d, err := NewFromString("???", test.input)
 		if err != nil {
 			panic(err)
 		}
 
 		// test Round
-		expected, err := NewFromString("???",test.expected)
+		expected, err := NewFromString("???", test.expected)
 		if err != nil {
 			panic(err)
 		}
@@ -890,13 +855,13 @@ func TestDecimal_BankRoundAndStringFixed(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		d, err := NewFromString("???",test.input)
+		d, err := NewFromString("???", test.input)
 		if err != nil {
 			panic(err)
 		}
 
 		// test Round
-		expected, err := NewFromString("???",test.expected)
+		expected, err := NewFromString("???", test.expected)
 		if err != nil {
 			panic(err)
 		}
@@ -921,11 +886,11 @@ func TestDecimal_BankRoundAndStringFixed(t *testing.T) {
 func TestDecimal_Uninitialized(t *testing.T) {
 	a := Money{}
 	b := Money{}
-	tm,_ := New("???",1, -1)
-	
+	tm, _ := New("???", 1, -1)
+
 	decs := []Money{
 		a,
-//		a.rescale(10),
+		//		a.rescale(10),
 		a.Abs(),
 		a.Add(b),
 		a.Sub(b),
@@ -984,11 +949,11 @@ func TestDecimal_Add(t *testing.T) {
 	}
 
 	for inp, res := range inputs {
-		a, err := NewFromString("???",inp.a)
+		a, err := NewFromString("???", inp.a)
 		if err != nil {
 			t.FailNow()
 		}
-		b, err := NewFromString("???",inp.b)
+		b, err := NewFromString("???", inp.b)
 		if err != nil {
 			t.FailNow()
 		}
@@ -1019,11 +984,11 @@ func TestDecimal_Sub(t *testing.T) {
 	}
 
 	for inp, res := range inputs {
-		a, err := NewFromString("???",inp.a)
+		a, err := NewFromString("???", inp.a)
 		if err != nil {
 			t.FailNow()
 		}
-		b, err := NewFromString("???",inp.b)
+		b, err := NewFromString("???", inp.b)
 		if err != nil {
 			t.FailNow()
 		}
@@ -1044,7 +1009,7 @@ func TestDecimal_Neg(t *testing.T) {
 	}
 
 	for inp, res := range inputs {
-		a, err := NewFromString("???",inp)
+		a, err := NewFromString("???", inp)
 		if err != nil {
 			t.FailNow()
 		}
@@ -1078,11 +1043,11 @@ func TestDecimal_Mul(t *testing.T) {
 	}
 
 	for inp, res := range inputs {
-		a, err := NewFromString("???",inp.a)
+		a, err := NewFromString("???", inp.a)
 		if err != nil {
 			t.FailNow()
 		}
-		b, err := NewFromString("???",inp.b)
+		b, err := NewFromString("???", inp.b)
 		if err != nil {
 			t.FailNow()
 		}
@@ -1093,8 +1058,8 @@ func TestDecimal_Mul(t *testing.T) {
 	}
 
 	// positive scale
-	tm1,_ := New("???",45, -1)
-	tm2,_ := New("???",1234, 5)
+	tm1, _ := New("???", 45, -1)
+	tm2, _ := New("???", 1234, 5)
 	c := tm2.Mul(tm1)
 	if c.String() != "555300000" {
 		t.Errorf("Expected %s, got %s", "555300000", c.String())
@@ -1118,10 +1083,10 @@ func TestDecimal_Shift(t *testing.T) {
 	}
 
 	for inp, expectedStr := range inputs {
-		num, _ := NewFromString("???",inp.a)
+		num, _ := NewFromString("???", inp.a)
 
 		got := num.Shift(inp.b)
-		expected, _ := NewFromString("???",expectedStr)
+		expected, _ := NewFromString("???", expectedStr)
 		if !got.Equal(expected) {
 			t.Errorf("expected %v when shifting %v by %v, got %v",
 				expected, num, inp.b, got)
@@ -1151,16 +1116,16 @@ func TestDecimal_Div(t *testing.T) {
 	}
 
 	for inp, expectedStr := range inputs {
-		num, err := NewFromString("???",inp.a)
+		num, err := NewFromString("???", inp.a)
 		if err != nil {
 			t.FailNow()
 		}
-		denom, err := NewFromString("???",inp.b)
+		denom, err := NewFromString("???", inp.b)
 		if err != nil {
 			t.FailNow()
 		}
 		got := num.Div(denom)
-		expected, _ := NewFromString("???",expectedStr)
+		expected, _ := NewFromString("???", expectedStr)
 		if !got.Equal(expected) {
 			t.Errorf("expected %v when dividing %v by %v, got %v",
 				expected, num, denom, got)
@@ -1192,8 +1157,8 @@ func TestDecimal_Div(t *testing.T) {
 			for j := -1; j <= 1; j += 2 {
 				n := inp.n * int64(i)
 				n2 := inp.n2 * int64(j)
-				num,_ := New("???",n, inp.exp)
-				denom,_ := New("???",n2, inp.exp2)
+				num, _ := New("???", n, inp.exp)
+				denom, _ := New("???", n2, inp.exp2)
 				expected := expectedAbs
 				if i != j {
 					expected = "-" + expectedAbs
@@ -1233,12 +1198,12 @@ func TestDecimal_QuoRem(t *testing.T) {
 	}
 
 	for _, inp4 := range cases {
-		d, _ := NewFromString("???",inp4.d)
-		d2, _ := NewFromString("???",inp4.d2)
+		d, _ := NewFromString("???", inp4.d)
+		d2, _ := NewFromString("???", inp4.d2)
 		prec := inp4.exp
 		q, r := d.QuoRem(d2, prec)
-		expectedQ, _ := NewFromString("???",inp4.q)
-		expectedR, _ := NewFromString("???",inp4.r)
+		expectedQ, _ := NewFromString("???", inp4.q)
+		expectedR, _ := NewFromString("???", inp4.r)
 		if !q.Equal(expectedQ) || !r.Equal(expectedR) {
 			t.Errorf("bad QuoRem division %s , %s , %d got %v, %v expected %s , %s",
 				inp4.d, inp4.d2, prec, q, r, inp4.q, inp4.r)
@@ -1251,7 +1216,7 @@ func TestDecimal_QuoRem(t *testing.T) {
 			t.Errorf("quotient wrong precision: d=%v, d2= %v, prec=%d, q=%v, r=%v",
 				d, d2, prec, q, r)
 		}
-		tm1,_ := New("???",1, -prec)
+		tm1, _ := New("???", 1, -prec)
 		if r.Abs().Cmp(d2.Abs().Mul(tm1)) >= 0 {
 			t.Errorf("remainder too large: d=%v, d2= %v, prec=%d, q=%v, r=%v",
 				d, d2, prec, q, r)
@@ -1281,10 +1246,10 @@ func createDivTestCases() []DivTestCase {
 					for prec = -n; prec <= n; prec++ { // 2n+1
 						for _, v1 := range a { // 11
 							for _, v2 := range a { // 11, even if 0 is skipped
-								sign1,_ := New("???",int64(s), 0)
-								sign2,_ := New("???",int64(s2), 0)
-								td1,_ := New("???",int64(v1), int32(e1))
-								td2,_ := New("???",int64(v2), int32(e2))
+								sign1, _ := New("???", int64(s), 0)
+								sign2, _ := New("???", int64(s2), 0)
+								td1, _ := New("???", int64(v1), int32(e1))
+								td2, _ := New("???", int64(v2), int32(e2))
 								d := sign1.Mul(td1)
 								d2 := sign2.Mul(td2)
 								res = append(res, DivTestCase{d, d2, prec})
@@ -1318,7 +1283,7 @@ func TestDecimal_QuoRem2(t *testing.T) {
 				d, d2, prec, q, r)
 		}
 		// rule 3: abs(r)<abs(d) * 10^(-prec)
-		tr3,_ := New("???", 1, -prec)
+		tr3, _ := New("???", 1, -prec)
 		if r.Abs().Cmp(d2.Abs().Mul(tr3)) >= 0 {
 			t.Errorf("remainder too large, d=%v, d2=%v, prec=%d, q=%v, r=%v",
 				d, d2, prec, q, r)
@@ -1343,7 +1308,7 @@ func (d Money) DivOld(d2 Money, prec int) Money {
 	quoRat := big.NewRat(0, 1).Quo(ratNum, ratDenom)
 
 	// HACK(vadim): converting from Rat to Decimal inefficiently for now
-	ret, err := NewFromString("???",quoRat.FloatString(prec))
+	ret, err := NewFromString("???", quoRat.FloatString(prec))
 	if err != nil {
 		panic(err) // this should never happen
 	}
@@ -1421,21 +1386,21 @@ func TestDecimal_DivRound(t *testing.T) {
 		{"1", "19.9999999999999999999", 1, "0.1"},
 	}
 	for _, s := range cases {
-		d, _ := NewFromString("???",s.d)
-		d2, _ := NewFromString("???",s.d2)
-		result, _ := NewFromString("???",s.result)
+		d, _ := NewFromString("???", s.d)
+		d2, _ := NewFromString("???", s.d2)
+		result, _ := NewFromString("???", s.result)
 		prec := s.prec
 		q := d.DivRound(d2, prec)
 		if sign(q)*sign(d)*sign(d2) < 0 {
 			t.Errorf("sign of quotient wrong, got: %v/%v is about %v", d, d2, q)
 		}
-		tm1, _ := New("???",2, 0)
+		tm1, _ := New("???", 2, 0)
 		x := q.Mul(d2).Abs().Sub(d.Abs()).Mul(tm1)
-		tm2,_ := New("???",1, -prec)
+		tm2, _ := New("???", 1, -prec)
 		if x.Cmp(d2.Abs().Mul(tm2)) > 0 {
 			t.Errorf("wrong rounding, got: %v/%v prec=%d is about %v", d, d2, prec, q)
 		}
-		tm3,_ := New("???",-1, -prec)
+		tm3, _ := New("???", -1, -prec)
 		if x.Cmp(d2.Abs().Mul(tm3)) <= 0 {
 			t.Errorf("wrong rounding, got: %v/%v prec=%d is about %v", d, d2, prec, q)
 		}
@@ -1457,13 +1422,13 @@ func TestDecimal_DivRound2(t *testing.T) {
 		if sign(q)*sign(d)*sign(d2) < 0 {
 			t.Errorf("sign of quotient wrong, got: %v/%v is about %v", d, d2, q)
 		}
-		tm1,_ := New("???",2, 0)
+		tm1, _ := New("???", 2, 0)
 		x := q.Mul(d2).Abs().Sub(d.Abs()).Mul(tm1)
-		tm2,_ := New("???",1, -prec)
+		tm2, _ := New("???", 1, -prec)
 		if x.Cmp(d2.Abs().Mul(tm2)) > 0 {
 			t.Errorf("wrong rounding, got: %v/%v prec=%d is about %v", d, d2, prec, q)
 		}
-		tm3,_ := New("???",-1, -prec)
+		tm3, _ := New("???", -1, -prec)
 		if x.Cmp(d2.Abs().Mul(tm3)) <= 0 {
 			t.Errorf("wrong rounding, got: %v/%v prec=%d is about %v", d, d2, prec, q)
 		}
@@ -1521,9 +1486,9 @@ func TestDecimal_RoundCash(t *testing.T) {
 		{"393", 100, "393"},
 	}
 	for i, test := range tests {
-		d, _ := NewFromString("???",test.d)
+		d, _ := NewFromString("???", test.d)
 		haveRounded := d.RoundCash(test.interval)
-		result, _ := NewFromString("???",test.result)
+		result, _ := NewFromString("???", test.result)
 
 		if !haveRounded.Equal(result) {
 			t.Errorf("Index %d: Cash rounding for %q interval %d want %q, have %q", i, test.d, test.interval, test.result, haveRounded)
@@ -1546,14 +1511,14 @@ func TestDecimal_RoundCash_Panic(t *testing.T) {
 			t.Error("Expecting a panic but got nothing")
 		}
 	}()
-	d, _ := NewFromString("???","1")
+	d, _ := NewFromString("???", "1")
 	d.RoundCash(231)
 }
 
 func BenchmarkDecimal_RoundCash_Five(b *testing.B) {
 	const want = "3.50"
 	for i := 0; i < b.N; i++ {
-		val,_ := New("???",3478, -3)
+		val, _ := New("???", 3478, -3)
 		if have := val.StringFixedCash(5); have != want {
 			b.Fatalf("\nHave: %q\nWant: %q", have, want)
 		}
@@ -1563,7 +1528,7 @@ func BenchmarkDecimal_RoundCash_Five(b *testing.B) {
 func BenchmarkDecimal_RoundCash_Fifteen(b *testing.B) {
 	const want = "6.30"
 	for i := 0; i < b.N; i++ {
-		val,_ := New("???",635, -2)
+		val, _ := New("???", 635, -2)
 		if have := val.StringFixedCash(15); have != want {
 			b.Fatalf("\nHave: %q\nWant: %q", have, want)
 		}
@@ -1588,11 +1553,11 @@ func TestDecimal_Mod(t *testing.T) {
 	}
 
 	for inp, res := range inputs {
-		a, err := NewFromString("???",inp.a)
+		a, err := NewFromString("???", inp.a)
 		if err != nil {
 			t.FailNow()
 		}
-		b, err := NewFromString("???",inp.b)
+		b, err := NewFromString("???", inp.b)
 		if err != nil {
 			t.FailNow()
 		}
@@ -1604,9 +1569,9 @@ func TestDecimal_Mod(t *testing.T) {
 }
 
 func TestDecimal_Overflow(t *testing.T) {
-	tpMin, _ := New("???",1, math.MinInt32)
-	tpMax, _ := New("???",1, math.MaxInt32)
-	
+	tpMin, _ := New("???", 1, math.MinInt32)
+	tpMax, _ := New("???", 1, math.MaxInt32)
+
 	if !didPanic(func() { tpMin.Mul(tpMin) }) {
 		t.Fatalf("should have gotten an overflow panic")
 	}
@@ -1641,23 +1606,23 @@ func TestDecimal_ExtremeValues(t *testing.T) {
 	}
 
 	test(func() {
-		g,_ := New("???",123, math.MinInt32)
+		g, _ := New("???", 123, math.MinInt32)
 		got := g.Floor()
-		want,_ := NewFromFloat("???",0)
+		want, _ := NewFromFloat("???", 0)
 		if !got.Equal(want) {
 			t.Errorf("Error: got %s, expected 0", got)
 		}
 	})
 	test(func() {
-		g,_	:= New("???",123, math.MinInt32)
+		g, _ := New("???", 123, math.MinInt32)
 		got := g.Ceil()
-		want,_ := NewFromFloat("???",1)
+		want, _ := NewFromFloat("???", 1)
 		if !got.Equal(want) {
 			t.Errorf("Error: got %s, expected 1", got)
 		}
 	})
 	test(func() {
-		g,_ :=	New("???",123, math.MinInt32)
+		g, _ := New("???", 123, math.MinInt32)
 		got := g.Rat().FloatString(10)
 		expected := "0.0000000000"
 		if got != expected {
@@ -1676,7 +1641,7 @@ func TestIntPart(t *testing.T) {
 		{"9999.999", 9999},
 		{"-32768.01234", -32768},
 	} {
-		d, err := NewFromString("???",testCase.Dec)
+		d, err := NewFromString("???", testCase.Dec)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -1699,10 +1664,10 @@ func TestDecimal_Min(t *testing.T) {
 
 	for _, test := range testCases {
 		expected, input := test[0], test[1:]
-		expectedDecimal,_ := NewFromFloat("???",expected)
+		expectedDecimal, _ := NewFromFloat("???", expected)
 		decimalInput := []Money{}
 		for _, inp := range input {
-			d,_ := NewFromFloat("???",inp)
+			d, _ := NewFromFloat("???", inp)
 			decimalInput = append(decimalInput, d)
 		}
 		got := Min(decimalInput[0], decimalInput[1:]...)
@@ -1727,10 +1692,10 @@ func TestDecimal_Max(t *testing.T) {
 
 	for _, test := range testCases {
 		expected, input := test[0], test[1:]
-		expectedDecimal,_ := NewFromFloat("???",expected)
+		expectedDecimal, _ := NewFromFloat("???", expected)
 		decimalInput := []Money{}
 		for _, inp := range input {
-			d,_ := NewFromFloat("???",inp)
+			d, _ := NewFromFloat("???", inp)
 			decimalInput = append(decimalInput, d)
 		}
 		got := Max(decimalInput[0], decimalInput[1:]...)
@@ -1752,7 +1717,7 @@ func TestDecimal_Scan(t *testing.T) {
 	// will return an int64 if you specified a numeric format
 	a := Money{}
 	dbvalue := float64(54.33)
-	expected,_ := NewFromFloat("???",dbvalue)
+	expected, _ := NewFromFloat("???", dbvalue)
 
 	err := a.Scan(dbvalue)
 	if err != nil {
@@ -1769,7 +1734,7 @@ func TestDecimal_Scan(t *testing.T) {
 	// apparently MySQL 5.7.16 and returns these as float32 so we need
 	// to handle these as well
 	dbvalueFloat32 := float32(54.33)
-	expected,_ = NewFromFloat("???",float64(dbvalueFloat32))
+	expected, _ = NewFromFloat("???", float64(dbvalueFloat32))
 
 	err = a.Scan(dbvalueFloat32)
 	if err != nil {
@@ -1786,7 +1751,7 @@ func TestDecimal_Scan(t *testing.T) {
 	// at least SQLite returns an int64 when 0 is stored in the db
 	// and you specified a numeric format on the schema
 	dbvalueInt := int64(0)
-	expected,_ = New("???",dbvalueInt, 0)
+	expected, _ = New("???", dbvalueInt, 0)
 
 	err = a.Scan(dbvalueInt)
 	if err != nil {
@@ -1804,7 +1769,7 @@ func TestDecimal_Scan(t *testing.T) {
 	// the database driver will return byte slice []byte
 	valueStr := "535.666"
 	dbvalueStr := []byte(valueStr)
-	expected, err = NewFromString("???",valueStr)
+	expected, err = NewFromString("???", valueStr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1822,7 +1787,7 @@ func TestDecimal_Scan(t *testing.T) {
 	}
 
 	// lib/pq can also return strings
-	expected, err = NewFromString("???",valueStr)
+	expected, err = NewFromString("???", valueStr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1853,7 +1818,7 @@ func TestDecimal_Value(t *testing.T) {
 	}
 
 	// check that normal case is handled appropriately
-	a,_ := New("???",1234, -2)
+	a, _ := New("???", 1234, -2)
 	expected := "12.34"
 	value, err := a.Value()
 	if err != nil {
@@ -1866,15 +1831,15 @@ func TestDecimal_Value(t *testing.T) {
 // old tests after this line
 
 func TestDecimal_Scale(t *testing.T) {
-	a,_ := New("???",1234, -3)
+	a, _ := New("???", 1234, -3)
 	if a.Exponent() != -3 {
 		t.Errorf("error")
 	}
 }
 
 func TestDecimal_Abs1(t *testing.T) {
-	a,_ := New("???",-1234, -4)
-	b,_ := New("???",1234, -4)
+	a, _ := New("???", -1234, -4)
+	b, _ := New("???", 1234, -4)
 
 	c := a.Abs()
 	if c.Cmp(b) != 0 {
@@ -1883,8 +1848,8 @@ func TestDecimal_Abs1(t *testing.T) {
 }
 
 func TestDecimal_Abs2(t *testing.T) {
-	a,_ := New("???",-1234, -4)
-	b,_ := New("???",1234, -4)
+	a, _ := New("???", -1234, -4)
+	b, _ := New("???", 1234, -4)
 
 	c := b.Abs()
 	if c.Cmp(a) == 0 {
@@ -1893,9 +1858,9 @@ func TestDecimal_Abs2(t *testing.T) {
 }
 
 func TestDecimal_Equalities(t *testing.T) {
-	a,_ := New("???",1234, 3)
-	b,_ := New("???",1234, 3)
-	c,_ := New("???",1234, 4)
+	a, _ := New("???", 1234, 3)
+	b, _ := New("???", 1234, 3)
+	c, _ := New("???", 1234, 4)
 
 	if !a.Equal(b) {
 		t.Errorf("%q should equal %q", a, b)
@@ -1942,16 +1907,16 @@ func TestDecimal_Equalities(t *testing.T) {
 }
 
 func TestDecimal_ScalesNotEqual(t *testing.T) {
-	a,_ := New("???",1234, 2)
-	b,_ := New("???",1234, 3)
+	a, _ := New("???", 1234, 2)
+	b, _ := New("???", 1234, 3)
 	if a.Equal(b) {
 		t.Errorf("%q should not equal %q", a, b)
 	}
 }
 
 func TestDecimal_Cmp1(t *testing.T) {
-	a,_ := New("???",123, 3)
-	b,_ := New("???",-1234, 2)
+	a, _ := New("???", 123, 3)
+	b, _ := New("???", -1234, 2)
 
 	if a.Cmp(b) != 1 {
 		t.Errorf("Error")
@@ -1959,8 +1924,8 @@ func TestDecimal_Cmp1(t *testing.T) {
 }
 
 func TestDecimal_Cmp2(t *testing.T) {
-	a,_ := New("???",123, 3)
-	b,_ := New("???",1234, 2)
+	a, _ := New("???", 123, 3)
+	b, _ := New("???", 1234, 2)
 
 	if a.Cmp(b) != -1 {
 		t.Errorf("Error")
@@ -1968,8 +1933,8 @@ func TestDecimal_Cmp2(t *testing.T) {
 }
 
 func TestPow(t *testing.T) {
-	a,_ := New("???",4, 0)
-	b,_ := New("???",2, 0)
+	a, _ := New("???", 4, 0)
+	b, _ := New("???", 2, 0)
 	x := a.Pow(b)
 	if x.String() != "16" {
 		t.Errorf("Error, saw %s", x.String())
@@ -1977,8 +1942,8 @@ func TestPow(t *testing.T) {
 }
 
 func TestNegativePow(t *testing.T) {
-	a,_ := New("???",4, 0)
-	b,_ := New("???",-2, 0)
+	a, _ := New("???", 4, 0)
+	b, _ := New("???", -2, 0)
 	x := a.Pow(b)
 	if x.String() != "0.0625" {
 		t.Errorf("Error, saw %s", x.String())
@@ -1990,12 +1955,12 @@ func TestDecimal_Sign(t *testing.T) {
 		t.Errorf("%q should have sign 0", ZeroMoney)
 	}
 
-	one,_ := New("???",1, 0)
+	one, _ := New("???", 1, 0)
 	if one.Sign() != 1 {
 		t.Errorf("%q should have sign 1", one)
 	}
 
-	mone,_ := New("???",-1, 0)
+	mone, _ := New("???", -1, 0)
 	if mone.Sign() != -1 {
 		t.Errorf("%q should have sign -1", mone)
 	}
@@ -2021,7 +1986,7 @@ func didPanic(f func()) bool {
 }
 
 func TestDecimal_Coefficient(t *testing.T) {
-	d,_ := New("???",123, 0)
+	d, _ := New("???", 123, 0)
 	co := d.Coefficient()
 	if co.Int64() != 123 {
 		t.Error("Coefficient should be 123; Got:", co)
@@ -2040,7 +2005,7 @@ func (p MoneySlice) Less(i, j int) bool { return p[i].Cmp(p[j]) < 0 }
 func Benchmark_Cmp(b *testing.B) {
 	decimals := MoneySlice([]Money{})
 	for i := 0; i < 1000000; i++ {
-		foo,_ := New("???",int64(i), 0)
+		foo, _ := New("???", int64(i), 0)
 		decimals = append(decimals, foo)
 	}
 	b.ResetTimer()
@@ -2073,7 +2038,7 @@ func TestNullMoney_Scan(t *testing.T) {
 	}
 
 	dbvalue := float64(54.33)
-	expected,_ := NewFromFloat("???",dbvalue)
+	expected, _ := NewFromFloat("???", dbvalue)
 
 	err = a.Scan(dbvalue)
 	if err != nil {
@@ -2092,7 +2057,7 @@ func TestNullMoney_Scan(t *testing.T) {
 	// at least SQLite returns an int64 when 0 is stored in the db
 	// and you specified a numeric format on the schema
 	dbvalueInt := int64(0)
-	expected,_ = New("???",dbvalueInt, 0)
+	expected, _ = New("???", dbvalueInt, 0)
 
 	err = a.Scan(dbvalueInt)
 	if err != nil {
@@ -2112,7 +2077,7 @@ func TestNullMoney_Scan(t *testing.T) {
 	// the database driver will return byte slice []byte
 	valueStr := "535.666"
 	dbvalueStr := []byte(valueStr)
-	expected, err = NewFromString("???",valueStr)
+	expected, err = NewFromString("???", valueStr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2132,7 +2097,7 @@ func TestNullMoney_Scan(t *testing.T) {
 	}
 
 	// lib/pq can also return strings
-	expected, err = NewFromString("???",valueStr)
+	expected, err = NewFromString("???", valueStr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2154,8 +2119,8 @@ func TestNullMoney_Scan(t *testing.T) {
 func TestNullMoney_Value(t *testing.T) {
 	// Make sure this does implement the database/sql's driver.Valuer interface
 	// check that normal case is handled appropriately
-	nm1,_ := New("???",1234, -2)
-	
+	nm1, _ := New("???", 1234, -2)
+
 	a := NullMoney{Money: nm1, Valid: true}
 
 	var NullMoney NullMoney
@@ -2171,7 +2136,6 @@ func TestNullMoney_Value(t *testing.T) {
 		t.Errorf("%v is not nil", value)
 	}
 
-	
 	expected := "12.34"
 	value, err = a.Value()
 	if err != nil {
@@ -2186,7 +2150,7 @@ func TestBinary(t *testing.T) {
 		x := y.float
 
 		// Create the decimal
-		d1,_ := NewFromFloat("???",x)
+		d1, _ := NewFromFloat("???", x)
 
 		// Encode to binary
 		b, err := d1.MarshalBinary()
@@ -2219,14 +2183,14 @@ func slicesEqual(a, b []byte) bool {
 func TestGobEncode(t *testing.T) {
 	for _, y := range testTable {
 		x := y.float
-		d1,_ := NewFromFloat("???",x)
+		d1, _ := NewFromFloat("???", x)
 
 		b1, err := d1.GobEncode()
 		if err != nil {
 			t.Errorf("error encoding %v to binary: %v", d1, err)
 		}
 
-		d2,_ := NewFromFloat("???",x)
+		d2, _ := NewFromFloat("???", x)
 
 		b2, err := d2.GobEncode()
 		if err != nil {
@@ -2265,12 +2229,12 @@ func TestSum(t *testing.T) {
 	var i = int64(0)
 
 	for key := range vals {
-		vals[key],_ = New("???",i, 0)
+		vals[key], _ = New("???", i, 0)
 		i++
 	}
 
 	sum := Sum(vals[0], vals[1:]...)
-	tm1,_ := New("???",45, 0)
+	tm1, _ := New("???", 45, 0)
 	if !sum.Equal(tm1) {
 		t.Errorf("Failed to calculate sum, expected %s got %s", tm1, sum)
 	}
@@ -2281,26 +2245,26 @@ func TestAvg(t *testing.T) {
 	var i = int64(0)
 
 	for key := range vals {
-		vals[key],_ = New("???",i, 0)
+		vals[key], _ = New("???", i, 0)
 		i++
 	}
 
 	avg := Avg(vals[0], vals[1:]...)
-	check,_ := NewFromFloat("???",4.5)
+	check, _ := NewFromFloat("???", 4.5)
 	if !avg.Equal(check) {
 		t.Errorf("Failed to calculate average, expected %s got %s", check, avg.String())
 	}
 }
 
 func TestRoundBankAnomaly(t *testing.T) {
-	a,_ := New("???",25, -1)
-	b,_ := New("???",250, -2)
+	a, _ := New("???", 25, -1)
+	b, _ := New("???", 250, -2)
 
 	if !a.Equal(b) {
 		t.Errorf("Expected %s to equal %s", a, b)
 	}
 
-	expected,_ := New("???",2, 0)
+	expected, _ := New("???", 2, 0)
 
 	aRounded := a.RoundBank(0)
 	if !aRounded.Equal(expected) {
@@ -2311,4 +2275,40 @@ func TestRoundBankAnomaly(t *testing.T) {
 	if !bRounded.Equal(expected) {
 		t.Errorf("Expected bank rounding %s to equal %s, but it was %s", b, expected, bRounded)
 	}
+}
+
+func TestFormattedStrings(t *testing.T) {
+	for _, x := range testTable {
+		s := x.exact
+		aud := x.asAUD
+		d, err := NewFromString("AUD", s)
+		if err != nil {
+			t.Errorf("error while parsing %s", s)
+		} else if aud != "N/A" && d.FormattedStringBank() != aud {
+			t.Errorf("expected %s, got %s (from: %s)",
+				aud, d.FormattedStringBank(),
+				d.String())
+		}
+	}
+
+	for _, x := range testTable {
+		s := x.exact
+		acc := x.asAUDAccounting
+		d, err := NewFromString("AUD", s)
+		if err != nil {
+			t.Errorf("error while parsing %s", s)
+		} else {
+			d = d.Neg()
+			if acc != "N/A" && d.FormattedStringAccounting() != acc {
+				if acc == "0.00" && d.FormattedStringAccounting() == "(0.00)" {
+					// special case - we cool
+				} else {
+					t.Errorf("expected %s, got %s (from: %s)",
+						acc, d.FormattedStringAccounting(),
+						d.String())
+				}
+			}
+		}
+	}
+
 }

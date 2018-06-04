@@ -11,15 +11,13 @@
 package money
 
 import (
-	"github.com/shopspring/decimal"
-	"fmt"
-	"math"
-	"math/big"
 	"database/sql/driver"
 	"encoding/binary"
-//	"strings"
+	"fmt"
+	"github.com/shopspring/decimal"
+	"math"
+	"math/big"
 )
-
 
 // Core Monetary construct which uses shopspring's decimal number and adds a
 //  currency to the mix. All mathematical functions use the underlying decimal
@@ -28,10 +26,9 @@ import (
 //  Trying to perform operations (add/subtract/compare/etc) on mixed currency Moneys
 //  will panic. YOU HAVE BEEN WARNED.
 type Money struct {
-	amount	decimal.Decimal
+	amount   decimal.Decimal
 	currency *Currency
 }
-
 
 // DivisionPrecision is the number of decimal places in the result when it
 // doesn't divide exactly. Overriding this from the original 16 to 20. Just because.
@@ -51,39 +48,35 @@ type Money struct {
 var DivisionPrecision = 20
 
 // Zero constant, to make computations faster.
-var ZeroMoney = Money{ amount: decimal.Zero, currency: getUnknownCurrency(), }
-
-
-
-
+var ZeroMoney = Money{amount: decimal.Zero, currency: getUnknownCurrency()}
 
 // New returns a new Money of type currency, with an amount of value * 10 ^ exp.
 func New(curr string, value int64, exp int32) (Money, error) {
-	
+
 	c, ok := GetCurrency(curr)
 	if !ok {
-		return Money{}, fmt.Errorf("Currency [%s] not supported", curr)
-	} else {
-		return Money{
-				amount: decimal.New(value,exp),
-				currency: c,			
-		}, nil
+		return Money{amount: decimal.Zero, currency: getBadCurrency()}, fmt.Errorf("Currency [%s] not supported", curr)
 	}
+	return Money{
+		amount:   decimal.New(value, exp),
+		currency: c,
+	}, nil
+
 }
 
 // NewFromBigInt returns a new Money from a big.Int, value * 10 ^ exp
 func NewFromBigInt(curr string, value *big.Int, exp int32) (Money, error) {
-	
+
 	c, ok := GetCurrency(curr)
 	if !ok {
-		return Money{}, fmt.Errorf("Currency [%s] not supported", curr)
-	} else {
-	
-		return Money{
-				amount: decimal.NewFromBigInt(value, exp),
-				currency: c,			
-		}, nil
-	}	
+		return Money{amount: decimal.Zero, currency: getBadCurrency()}, fmt.Errorf("Currency [%s] not supported", curr)
+	}
+
+	return Money{
+		amount:   decimal.NewFromBigInt(value, exp),
+		currency: c,
+	}, nil
+
 }
 
 // NewFromString returns a new Decimal from a string representation.
@@ -97,18 +90,16 @@ func NewFromString(curr string, value string) (Money, error) {
 
 	c, ok := GetCurrency(curr)
 	if !ok {
-		return Money{}, fmt.Errorf("Currency [%s] not supported", curr)
-	} else {
-		if d, errr := decimal.NewFromString(value); errr != nil {
-			return Money{}, errr
-		} else {
-			return Money{
-					amount: d,
-					currency: c,			
-			}, nil
-			
-		}
+		return Money{amount: decimal.Zero, currency: getBadCurrency()}, fmt.Errorf("Currency [%s] not supported", curr)
 	}
+	d, errr := decimal.NewFromString(value)
+	if errr != nil {
+		return Money{amount: decimal.Zero, currency: getBadCurrency()}, errr
+	}
+	return Money{
+		amount:   d,
+		currency: c,
+	}, nil
 }
 
 // RequireFromString returns a new Money from a string representation
@@ -141,7 +132,7 @@ func RequireFromString(curr string, value string) Money {
 func NewFromFloat(curr string, value float64) (Money, error) {
 	return NewFromFloatWithExponent(curr, value, math.MinInt32)
 }
- 
+
 // NewFromFloatWithExponent converts a float64 to Decimal, with an arbitrary
 // number of fractional digits.
 //
@@ -155,38 +146,35 @@ func NewFromFloatWithExponent(curr string, value float64, exp int32) (Money, err
 	}
 
 	c, ok := GetCurrency(curr)
-	if !ok  {
-		return Money{}, fmt.Errorf("Currency [%s] not supported", curr)
-	} else {
+	if !ok {
+		return Money{amount: decimal.Zero, currency: getBadCurrency()}, fmt.Errorf("Currency [%s] not supported", curr)
+	}
 
-		return Money{
-				amount: decimal.NewFromFloatWithExponent(value,exp),
-				currency: c,			
-		}, nil
-	}	
+	return Money{
+		amount:   decimal.NewFromFloatWithExponent(value, exp),
+		currency: c,
+	}, nil
 }
 
-
+// UpdateCurrency(newCurr string)
 // Allows you to update the currency to the correct code, but only if an UnknownCurrencyCode.
 // Otherwise it returns an error (nil if ok)
 func (m *Money) UpdateCurrency(newCurr string) error {
-	
+
 	if m.currency.Code != UnknownCurrencyCode {
 		return fmt.Errorf("Cannot change currency to [%s]. Already set to [%s]!", newCurr, m.currency.Code)
 	}
-	
+
 	c, ok := GetCurrency(newCurr)
 	if !ok {
 		return fmt.Errorf("Currency [%s] not supported", newCurr)
-	} else {
-	
-		m.currency = c
-	}	
+	}
+
+	m.currency = c
+
 	return nil
-	
+
 }
-
-
 
 // Abs returns the absolute value of the decimal.
 func (m Money) Abs() Money {
@@ -194,13 +182,13 @@ func (m Money) Abs() Money {
 	m.ensureInitialized()
 
 	return Money{
-			amount: m.amount.Abs(),
-			currency: m.currency,			
+		amount:   m.amount.Abs(),
+		currency: m.currency,
 	}
 }
 
 // Add returns m + m2.
-// 
+//
 // NOTE: This will panic if you try to add Moneys of differing currencies.
 // That functionality may come later
 func (m Money) Add(m2 Money) Money {
@@ -209,17 +197,17 @@ func (m Money) Add(m2 Money) Money {
 	m2.ensureInitialized()
 
 	if !m.currency.equals(m2.currency) {
-		panic(fmt.Sprintf("Cannot add mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency ))
+		panic(fmt.Sprintf("Cannot add mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency))
 	}
 
 	return Money{
-			amount: m.amount.Add(m2.amount),
-			currency: m.currency,			
+		amount:   m.amount.Add(m2.amount),
+		currency: m.currency,
 	}
 }
 
 // Sub returns m - m2.
-// 
+//
 // NOTE: This will panic if you try to subtract Moneys of differing currencies.
 // That functionality may come later
 func (m Money) Sub(m2 Money) Money {
@@ -228,14 +216,14 @@ func (m Money) Sub(m2 Money) Money {
 	m2.ensureInitialized()
 
 	if !m.currency.equals(m2.currency) {
-		panic(fmt.Sprintf("Cannot subtract mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency ))
+		panic(fmt.Sprintf("Cannot subtract mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency))
 	}
 
 	m.ensureInitialized()
 
 	return Money{
-			amount: m.amount.Sub(m2.amount),
-			currency: m.currency,			
+		amount:   m.amount.Sub(m2.amount),
+		currency: m.currency,
 	}
 }
 
@@ -245,13 +233,13 @@ func (m Money) Neg() Money {
 	m.ensureInitialized()
 
 	return Money{
-			amount: m.amount.Neg(),
-			currency: m.currency,			
+		amount:   m.amount.Neg(),
+		currency: m.currency,
 	}
 }
 
 // Mul returns d * d2.
-// 
+//
 // NOTE: This will panic if you try to multiply Moneys of differing currencies.
 // That functionality may come later
 //
@@ -262,12 +250,12 @@ func (m Money) Mul(m2 Money) Money {
 	m2.ensureInitialized()
 
 	if !m.currency.equals(m2.currency) {
-		panic(fmt.Sprintf("Cannot multiply mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency ))
+		panic(fmt.Sprintf("Cannot multiply mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency))
 	}
 
 	return Money{
-			amount: m.amount.Mul(m2.amount),
-			currency: m.currency,			
+		amount:   m.amount.Mul(m2.amount),
+		currency: m.currency,
 	}
 }
 
@@ -280,8 +268,8 @@ func (m Money) Shift(shift int32) Money {
 	m.ensureInitialized()
 
 	return Money{
-			amount: m.amount.Shift(shift),
-			currency: m.currency,			
+		amount:   m.amount.Shift(shift),
+		currency: m.currency,
 	}
 }
 
@@ -299,25 +287,24 @@ func (m Money) DivRound(m2 Money, precision int32) Money {
 	m2.ensureInitialized()
 
 	if !m.currency.equals(m2.currency) {
-		panic(fmt.Sprintf("Cannot divide amounts with mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency ))
+		panic(fmt.Sprintf("Cannot divide amounts with mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency))
 	}
 
 	return Money{
-			amount: m.amount.DivRound(m2.amount,precision),
-			currency: m.currency,			
+		amount:   m.amount.DivRound(m2.amount, precision),
+		currency: m.currency,
 	}
 }
 
 // Div returns d / d2. If it doesn't divide exactly, the result will have
 // DivisionPrecision digits after the decimal point.
-// 
-// NOTE: This will panic (thrown eventually from DivRound) if you try to 
+//
+// NOTE: This will panic (thrown eventually from DivRound) if you try to
 // divide Moneys of differing currencies.
 // That functionality may come later
 func (m Money) Div(m2 Money) Money {
-	return m.DivRound(m2, int32(DivisionPrecision)) 
+	return m.DivRound(m2, int32(DivisionPrecision))
 }
-
 
 // QuoRem does divsion with remainder
 // d.QuoRem(d2,precision) returns quotient q and remainder r such that
@@ -330,19 +317,19 @@ func (m Money) QuoRem(m2 Money, precision int32) (Money, Money) {
 	m2.ensureInitialized()
 
 	if !m.currency.equals(m2.currency) {
-		panic(fmt.Sprintf("Cannot divide amounts with mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency ))
+		panic(fmt.Sprintf("Cannot divide amounts with mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency))
 	}
 
-	d1, d2 := m.amount.QuoRem(m2.amount,precision)
-	
+	d1, d2 := m.amount.QuoRem(m2.amount, precision)
+
 	return Money{
-			amount: d1,
-			currency: m.currency,			
-		   },
-		   Money{
-			amount: d2,
-			currency: m2.currency,			
-		   }	
+			amount:   d1,
+			currency: m.currency,
+		},
+		Money{
+			amount:   d2,
+			currency: m2.currency,
+		}
 }
 
 // Mod returns d % d2.
@@ -351,12 +338,12 @@ func (m Money) Mod(m2 Money) Money {
 	m2.ensureInitialized()
 
 	if !m.currency.equals(m2.currency) {
-		panic(fmt.Sprintf("Cannot modulo amounts with mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency ))
+		panic(fmt.Sprintf("Cannot modulo amounts with mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency))
 	}
 
 	return Money{
-			amount: m.amount.Mod(m2.amount),
-			currency: m.currency,			
+		amount:   m.amount.Mod(m2.amount),
+		currency: m.currency,
 	}
 }
 
@@ -367,15 +354,14 @@ func (m Money) Pow(m2 Money) Money {
 	m2.ensureInitialized()
 
 	if !m.currency.equals(m2.currency) {
-		panic(fmt.Sprintf("Cannot take power of amounts with mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency ))
+		panic(fmt.Sprintf("Cannot take power of amounts with mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency))
 	}
 
 	return Money{
-			amount: m.amount.Pow(m2.amount),
-			currency: m.currency,			
+		amount:   m.amount.Pow(m2.amount),
+		currency: m.currency,
 	}
 }
-
 
 // Cmp compares the numbers represented by d and d2 and returns:
 //
@@ -391,7 +377,7 @@ func (m Money) Cmp(m2 Money) int {
 	m2.ensureInitialized()
 
 	if !m.currency.equals(m2.currency) {
-		panic(fmt.Sprintf("Cannot compare amounts with mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency ))
+		panic(fmt.Sprintf("Cannot compare amounts with mismatched currencies m1[%s] m2[%s]", m.currency, m2.currency))
 	}
 
 	return m.amount.Cmp(m2.amount)
@@ -451,7 +437,7 @@ func (m Money) Coefficient() *big.Int {
 	// we copy the coefficient so that mutating the result does not mutate the
 	// Decimal.
 	m.ensureInitialized()
-	
+
 	return m.amount.Coefficient()
 }
 
@@ -510,10 +496,9 @@ func (m Money) String() string {
 //TODO Fix this.
 func (m Money) StringFixed(places int32) string {
 	m.ensureInitialized()
-	
+
 	return m.amount.StringFixed(places)
 }
-
 
 // StringFixedBank returns a banker rounded fixed-point string with places digits
 // after the decimal point.
@@ -528,18 +513,17 @@ func (m Money) StringFixed(places int32) string {
 // 	   NewFromFloat(5.45).StringFixed(3) // output: "5.450"
 // 	   NewFromFloat(545).StringFixed(-1) // output: "550"
 //
-func (m Money) StringFixedBank(places int32) string { 
+func (m Money) StringFixedBank(places int32) string {
 	m.ensureInitialized()
-	
+
 	return m.amount.StringFixedBank(places)
 }
 
 func (m Money) StringFixedCash(interval uint8) string {
 	m.ensureInitialized()
-	
+
 	return m.amount.StringFixedCash(interval)
 }
-
 
 // StringFixedBank returns a banker rounded fixed-point string with places digits
 // after the decimal point.
@@ -556,7 +540,7 @@ func (m Money) StringFixedCash(interval uint8) string {
 //
 func (m Money) FormattedStringBank() string {
 	m.ensureInitialized()
-	
+
 	return m.currency.Formatter().FormatCurrency(m.amount)
 }
 
@@ -576,7 +560,7 @@ func (m Money) FormattedStringBank() string {
 //TODO Fix this.
 func (m Money) FormattedStringAccounting() string {
 	m.ensureInitialized()
-	
+
 	return m.currency.Formatter().FormatAccounting(m.amount)
 }
 
@@ -585,7 +569,7 @@ func (m Money) FormattedStringAccounting() string {
 //TODO Fix this.
 func (m Money) FormattedStringFixedCash(interval uint8) string {
 	m.ensureInitialized()
-	
+
 	return m.currency.Formatter().FormatCurrency(m.RoundCash(interval).amount)
 }
 
@@ -601,8 +585,8 @@ func (m Money) Round(places int32) Money {
 	m.ensureInitialized()
 
 	return Money{
-			amount: m.amount.Round(places),
-			currency: m.currency,
+		amount:   m.amount.Round(places),
+		currency: m.currency,
 	}
 }
 
@@ -625,8 +609,8 @@ func (m Money) RoundBank(places int32) Money {
 	m.ensureInitialized()
 
 	return Money{
-			amount: m.amount.RoundBank(places),
-			currency: m.currency,
+		amount:   m.amount.RoundBank(places),
+		currency: m.currency,
 	}
 
 }
@@ -646,8 +630,8 @@ func (m Money) RoundCash(interval uint8) Money {
 	m.ensureInitialized()
 
 	return Money{
-			amount: m.amount.RoundCash(interval),
-			currency: m.currency,
+		amount:   m.amount.RoundCash(interval),
+		currency: m.currency,
 	}
 	// TODO: optimize those calculations to reduce the high allocations (~29 allocs).
 	// return d.Mul(dVal).Round(0).Div(dVal).Truncate(2)
@@ -658,8 +642,8 @@ func (m Money) Floor() Money {
 	m.ensureInitialized()
 
 	return Money{
-			amount: m.amount.Floor(),
-			currency: m.currency,
+		amount:   m.amount.Floor(),
+		currency: m.currency,
 	}
 }
 
@@ -668,8 +652,8 @@ func (m Money) Ceil() Money {
 	m.ensureInitialized()
 
 	return Money{
-			amount: m.amount.Ceil(),
-			currency: m.currency,
+		amount:   m.amount.Ceil(),
+		currency: m.currency,
 	}
 }
 
@@ -685,8 +669,8 @@ func (m Money) Truncate(precision int32) Money {
 	m.ensureInitialized()
 
 	return Money{
-			amount: m.amount.Truncate(precision),
-			currency: m.currency,
+		amount:   m.amount.Truncate(precision),
+		currency: m.currency,
 	}
 }
 
@@ -724,12 +708,12 @@ func (m Money) Truncate(precision int32) Money {
 
 // UnmarshalBinary implements the encoding.BinaryUnmarshaler interface. As a string representation
 // is already used when encoding to text, this method stores that string as []byte
-// NOTE: This is going to break really badlyif we have non ASCII 
+// NOTE: This is going to break really badlyif we have non ASCII
 //    chars in the currency code. Should probably add a length byte at the start
 //    but cannot be arsed right now.
 func (m *Money) UnmarshalBinary(data []byte) error {
-	
-	var err error = nil
+
+	var err error
 	var mo Money
 
 	if ld := len(data); ld < 8 {
@@ -737,39 +721,39 @@ func (m *Money) UnmarshalBinary(data []byte) error {
 	} else {
 		// Extract the exponent
 		curr := string(data[:3])
-	
+
 		// Extract the exponent
 		exp := int32(binary.BigEndian.Uint32(data[3:7]))
-	
+
 		// Extract the value
 		v := new(big.Int)
-		
+
 		if err = v.GobDecode(data[7:]); err == nil {
-			mo, _ = NewFromBigInt(curr,v,exp)
+			mo, _ = NewFromBigInt(curr, v, exp)
 			*m = mo
 		} else {
-		}	
+		}
 	}
-	
+
 	return err
 }
 
 // MarshalBinary implements the encoding.BinaryMarshaler interface.
-// NOTE: This is going to break really badlyif we have non ASCII 
+// NOTE: This is going to break really badlyif we have non ASCII
 //    chars in the currency code. Should probably add a length byte at the start
 //    but cannot be arsed right now.
 func (m Money) MarshalBinary() (data []byte, err error) {
 	// Write currency first as it's meant to be a fixed size (3 bytes)
 	b1 := []byte(m.currency.Code)
-	
+
 	// Write the exponent next since it's a fixed size
 	b2 := make([]byte, 4)
 	binary.BigEndian.PutUint32(b2, uint32(m.Exponent()))
 
-	b1 = append (b1,b2...)
-	
+	b1 = append(b1, b2...)
+
 	// Add the value
-	var b3 []byte 
+	var b3 []byte
 	var mCo = m.Coefficient()
 	if b3, err = mCo.GobEncode(); err != nil {
 		return
@@ -777,7 +761,7 @@ func (m Money) MarshalBinary() (data []byte, err error) {
 
 	// Return the byte array
 	data = append(b1, b3...)
-	
+
 	return
 }
 
@@ -787,18 +771,18 @@ func (m *Money) Scan(value interface{}) error {
 	switch v := value.(type) {
 
 	case float32:
-		*m,_ = NewFromFloat(UnknownCurrencyCode,float64(v))
+		*m, _ = NewFromFloat(UnknownCurrencyCode, float64(v))
 		return nil
 
 	case float64:
 		// numeric in sqlite3 sends us float64
-		*m,_ = NewFromFloat(UnknownCurrencyCode,v)
+		*m, _ = NewFromFloat(UnknownCurrencyCode, v)
 		return nil
 
 	case int64:
 		// at least in sqlite3 when the value is 0 in db, the data is sent
 		// to us as an int64 instead of a float64 ...
-		*m,_ = New(UnknownCurrencyCode,v, 0)
+		*m, _ = New(UnknownCurrencyCode, v, 0)
 		return nil
 
 	default:
@@ -807,7 +791,7 @@ func (m *Money) Scan(value interface{}) error {
 		if err != nil {
 			return err
 		}
-		*m, err = NewFromString(UnknownCurrencyCode,str)
+		*m, err = NewFromString(UnknownCurrencyCode, str)
 		return err
 	}
 }
@@ -817,27 +801,25 @@ func (m Money) Value() (driver.Value, error) {
 	return m.String(), nil
 }
 
-// TODO
 // UnmarshalText implements the encoding.TextUnmarshaler interface for XML
 // deserialization.
-//func (d *Decimal) UnmarshalText(text []byte) error {
-//	str := string(text)
-//
-//	dec, err := NewFromString(str)
-//	*d = dec
-//	if err != nil {
-//		return fmt.Errorf("Error decoding string '%s': %s", str, err)
-//	}
-//
-//	return nil
-//}
+func (d *Money) UnmarshalText(text []byte) error {
+	str := string(text)
 
-// TODO
+	dec, err := NewFromString(UnknownCurrencyCode, str)
+	*d = dec
+	if err != nil {
+		return fmt.Errorf("Error decoding string '%s': %s", str, err)
+	}
+
+	return nil
+}
+
 // MarshalText implements the encoding.TextMarshaler interface for XML
 // serialization.
-//func (d Decimal) MarshalText() (text []byte, err error) {
-//	return []byte(d.String()), nil
-//}
+func (d Money) MarshalText() (text []byte, err error) {
+	return []byte(d.String()), nil
+}
 
 // GobEncode implements the gob.GobEncoder interface for gob serialization.
 func (m Money) GobEncode() ([]byte, error) {
@@ -849,11 +831,8 @@ func (m *Money) GobDecode(data []byte) error {
 	return m.UnmarshalBinary(data)
 }
 
-
-
-
-// Checks to see if we actually have a proper Money object. 
-// If not, create a valid Zero so we can at least not crash things too badly. 
+// Checks to see if we actually have a proper Money object.
+// If not, create a valid Zero so we can at least not crash things too badly.
 func (m *Money) ensureInitialized() {
 	if m.currency == nil {
 		m.currency = getUnknownCurrency()
@@ -906,7 +885,7 @@ func Sum(first Money, rest ...Money) Money {
 
 // Avg returns the average value of the provided first and rest Decimals
 func Avg(first Money, rest ...Money) Money {
-	count,_ := New(first.currency.Code,int64(len(rest)+1), 0)
+	count, _ := New(first.currency.Code, int64(len(rest)+1), 0)
 	sum := Sum(first, rest...)
 	return sum.Div(count)
 }
@@ -941,8 +920,8 @@ func unquoteIfQuoted(value interface{}) (string, error) {
 // NullMoney represents a nullable decimal with compatibility for
 // scanning null values from the database.
 type NullMoney struct {
-	Money   Money
-	Valid   bool
+	Money Money
+	Valid bool
 }
 
 // Scan implements the sql.Scanner interface for database deserialization.
@@ -980,5 +959,3 @@ func (d NullMoney) Value() (driver.Value, error) {
 //	}
 //	return d.Money.MarshalJSON()
 //}
-
-

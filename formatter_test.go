@@ -1,8 +1,8 @@
 package money
 
 import (
-	"testing"
 	"github.com/shopspring/decimal"
+	"testing"
 )
 
 func TestFormatter_FormatX(t *testing.T) {
@@ -92,17 +92,15 @@ func TestFormatter_FormatX(t *testing.T) {
 		formatter := NewFormatter(tc.fraction, tc.decimal, tc.thousand, tc.grapheme, tc.template)
 		var r string
 		if tc.testtype == 2 {
-			r = formatter.FormatAccounting(decimal.New(tc.amount,int32(-tc.fraction)))
+			r = formatter.FormatAccounting(decimal.New(tc.amount, int32(-tc.fraction)))
 		} else {
-			r = formatter.FormatCurrency(decimal.New(tc.amount,int32(-tc.fraction)))
+			r = formatter.FormatCurrency(decimal.New(tc.amount, int32(-tc.fraction)))
 		}
 		if r != tc.expected {
 			t.Errorf("Expected %d formatted to be %s got %s", tc.amount, tc.expected, r)
 		}
 	}
 }
-
-
 
 func TestFormatter_FormatWithCurrency(t *testing.T) {
 	tcs := []struct {
@@ -151,7 +149,6 @@ func TestFormatter_FormatWithCurrency(t *testing.T) {
 		{1, "GBP", 1234567, "£12,345.67"},
 		{2, "GBP", -12345678, "(123456.78)"},
 		{1, "GBP", -123456789, "-£1,234,567.89"},
-
 	}
 
 	// Add some test currencies first
@@ -160,12 +157,12 @@ func TestFormatter_FormatWithCurrency(t *testing.T) {
 	for _, tc := range tcs {
 		c, _ := GetCurrency(tc.currency)
 		formatter := c.Formatter()
-		
+
 		var r string
 		if tc.testtype == 2 {
-			r = formatter.FormatAccounting(decimal.New(tc.amount,int32(-formatter.Fraction)))
+			r = formatter.FormatAccounting(decimal.New(tc.amount, int32(-formatter.Fraction)))
 		} else {
-			r = formatter.FormatCurrency(decimal.New(tc.amount,int32(-formatter.Fraction)))
+			r = formatter.FormatCurrency(decimal.New(tc.amount, int32(-formatter.Fraction)))
 		}
 		if r != tc.expected {
 			t.Errorf("Expected %d formatted to be %s got %s", tc.amount, tc.expected, r)
